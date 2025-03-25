@@ -18,12 +18,28 @@ Controller::~Controller() {
     cleanup();
 }
 
-void Controller::start() {
-    if (!isRunning) {
-        isRunning = true;
-        initialize();  // Initialization on start
-        std::cout << "Controller started." << std::endl;
+bool Controller::sendMSG(int cmd, int option) {
+    bool status = false;
+
+    DWORD result = WaitForSingleObject(sh->getEmptyEvent(), 0);
+       
+    if (result == WAIT_OBJECT_0) {
+        std::cout << "Able to set message\n";
+        status = sh->setMessage(cmd, option);
+        if (status) {
+            ResetEvent(sh->getEmptyEvent());
+            SetEvent(sh->getFullEvent());
+        }
+        return status;
     }
+    else if (result == WAIT_TIMEOUT) {
+        std::cout << "Not Able to set message\n";
+    }
+    else {
+        std::cerr << "Error checking event state.\n";
+    }
+        
+    return status;
 }
 
 void Controller::initialize() {
@@ -65,7 +81,6 @@ void Controller::initialize() {
         default:
             cerr << "Wait failed!" << endl;
     }
-
 }
 
 void Controller::cleanup() {

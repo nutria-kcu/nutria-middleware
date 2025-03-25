@@ -12,6 +12,11 @@
 #define DLL_API __declspec(dllimport)  // Import when using the DLL
 #endif
 
+struct Message {
+    int cmd;
+    int option;
+};
+
 class DLL_API Controller {
 public:
     // Constructor
@@ -20,8 +25,7 @@ public:
     // Destructor
     ~Controller();
 
-    // Public Methods
-    void start();  // Method to start the controller's functionality
+    bool sendMSG(int cmd, int option);
 
 private:
     // Private Member Variables (State, configuration, etc.)
