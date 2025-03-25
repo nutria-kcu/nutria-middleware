@@ -14,6 +14,7 @@ Controller::Controller() : state(0), isRunning(false) {
 // Destructor implementation
 Controller::~Controller() {
     // Clean up resources, if needed
+    cout << "destruct controller\n";
     cleanup();
 }
 
@@ -29,8 +30,8 @@ void Controller::initialize() {
     bool result = false;
     wstring targetProcess = L"Notepad.exe";
     DWORD pid = check_pid(targetProcess);
-    wstring sharedMemoryDLL = get_current_directory() + L"\\SharedMemory.dll";
-    wstring hackCoreDLL = get_current_directory() + L"\\kcu-hack.dll";
+    wstring sharedMemoryDLL = get_current_directory() + L"\\res\\SharedMemory.dll";
+    wstring hackCoreDLL = get_current_directory() + L"\\res\\kcu-hack.dll";
 
     result = dll_injection(pid, sharedMemoryDLL);
     if (!result) {
