@@ -77,40 +77,51 @@ bool dll_injection(
     LPTHREAD_START_ROUTINE thread_start_routine = nullptr;
     do {
         process_handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-        // get handle for process with given pid
+        // Target Process is not open
         if (process_handle == nullptr) {
+            std::cerr << "Failed to open process. Error: " << GetLastError() << std::endl;
             break;
         }
-        // allocate mem for given dll at VAS
+
+        // Allocate memory in the target process for the DLL path
         remote_buffer = VirtualAllocEx(
             process_handle,
             nullptr,
-            dll_name.size(),
-            MEM_COMMIT, // Allocates memory charges (from the overall size of memory and the paging files on disk) for the specified reserved memory pages.
-            PAGE_READWRITE // protection
+            (dll_name.size() + 1) * sizeof(wchar_t), // Ensure null termination
+            MEM_COMMIT | MEM_RESERVE,
+            PAGE_READWRITE
         );
 
         if (!remote_buffer) {
+            std::cerr << "Failed to allocate memory in target process. Error: " << GetLastError() << std::endl;
             break;
-        } // when failed
+        }
 
-        // dll injection (write dll path string)
+        // Write the DLL path into the allocated memory
         if (!WriteProcessMemory(
             process_handle,
             remote_buffer,
             dll_name.c_str(),
-            dll_name.size() * sizeof(wchar_t),
+            (dll_name.size() + 1) * sizeof(wchar_t), // Include null terminator
             nullptr)
             ) {
+            std::cerr << "Failed to write process memory. Error: " << GetLastError() << std::endl;
             break;
         }
 
-        // get kernel32.dll 's handle
+        // Get handle to Kernel32.dll
         module = GetModuleHandle(L"kernel32.dll");
+        if (!module) {
+            std::cerr << "Failed to get handle for kernel32.dll. Error: " << GetLastError() << std::endl;
+            break;
+        }
 
-        // load and store pointer to LoadLibrary function in Kernel32.dll
+        // Get address of LoadLibraryW in Kernel32.dll
         thread_start_routine = (LPTHREAD_START_ROUTINE)GetProcAddress(module, "LoadLibraryW");
-
+        if (!thread_start_routine) {
+            std::cerr << "Failed to get address of LoadLibraryW. Error: " << GetLastError() << std::endl;
+            break;
+        }
 
         // CreateRemoteThread() 함수는 스레드를 생성하는 함수인데, 
         // 저 함수를 호출하는 프로세스가 아닌 다른 프로세스에 스레드를 생성하는 기능을 가지고 있다
@@ -130,41 +141,47 @@ bool dll_injection(
             nullptr
         );
 
-        // time out 10 sec
-        DWORD waitResult = WaitForSingleObject(thread_handle, 10000);
-
-        switch (waitResult) {
-        case WAIT_OBJECT_0:
-            std::cout << "WAIT_OBJECT_0: The object is signaled." << std::endl;
-            result = true;
-            break;
-
-        case WAIT_TIMEOUT:
-            std::cout << "WAIT_TIMEOUT: The wait timed out before the object became signaled." << std::endl;
-            result = false;
-            break;
-
-        case WAIT_ABANDONED:
-            std::cout << "WAIT_ABANDONED: A mutex was not released before the owning thread terminated. Check for data consistency." << std::endl;
-            result = false;
-            break;
-
-        case WAIT_FAILED:
-            std::cerr << "WAIT_FAILED: The function failed. Error code: " << GetLastError() << std::endl;
-            result = false;
-            break;
-
-        default:
-            std::cerr << "Unknown return value: " << result << std::endl;
-            result = false;
+        if (!thread_handle) {
+            std::cerr << "Failed to create remote thread. Error: " << GetLastError() << std::endl;
             break;
         }
 
-        
+        // time out 10 sec
+        DWORD waitResult = WaitForSingleObject(thread_handle, 10000);
+
+        if (waitResult != WAIT_OBJECT_0) {
+            std::cerr << "Remote thread did not complete properly. Wait result: " << waitResult << std::endl;
+            break;
+        }
+
+        // Get the exit code of the remote thread (which should be the return value of LoadLibraryW)
+        DWORD exit_code = 0;
+        if (!GetExitCodeThread(thread_handle, &exit_code)) {
+            std::cerr << "Failed to get thread exit code. Error: " << GetLastError() << std::endl;
+            break;
+        }
+
+        // If LoadLibraryW failed, it returns NULL (0)
+        if (exit_code == 0) {
+            std::cerr << "DLL injection failed: LoadLibraryW returned NULL. The path may be incorrect or the DLL is invalid." << std::endl;
+            break;
+        }
+
+        std::cout << "DLL successfully injected at base address: " << exit_code << std::endl;
+        result = true;
+
     } while (false);
 
-    CloseHandle(process_handle);
-    CloseHandle(thread_handle);
+    // Cleanup
+    if (remote_buffer) {
+        VirtualFreeEx(process_handle, remote_buffer, 0, MEM_RELEASE);
+    }
+    if (thread_handle) {
+        CloseHandle(thread_handle);
+    }
+    if (process_handle) {
+        CloseHandle(process_handle);
+    }
 
     return result;
 }
