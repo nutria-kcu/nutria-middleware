@@ -43,33 +43,29 @@ bool Controller::sendMSG(int cmd, int option) {
 }
 
 void Controller::initialize() {
+    
     bool result = false;
     wstring targetProcess = L"Notepad.exe";
     DWORD pid = check_pid(targetProcess);
-    wstring sharedMemoryDLL = get_current_directory() + L"\\res\\SharedMemory.dll";
     wstring hackCoreDLL = get_current_directory() + L"\\res\\kcu-hack.dll";
 
-    result = dll_injection(pid, sharedMemoryDLL);
-    if (!result) {
-        cout << "Failed to inject SharedMemory.dll\n";
-        return;
-    }
-    result = dll_injection(pid, hackCoreDLL);
-    if (!result) {
-        cout << "Failed to inject kcu-hack.dll\n";
-        return;
-    }
-    // event signal 대기하기 -> hack-core init 완료대기해야함
     sh = new SharedMemoryHandler(_T("NUTRI-IPC"), 1); // is producer
 
     if (sh == nullptr) {
         cout << "Failed to initialize SharedMemoryHandler\n";
         return;
     }
-    
+
+    // event signal 대기하기 -> hack-core init 완료대기해야함
     HANDLE hEventInit = CreateEvent(NULL, TRUE, FALSE, L"COREINIT");
 
-    DWORD waitResult = WaitForSingleObject(hEventInit, 5000);
+    result = dll_injection(pid, hackCoreDLL);
+    if (!result) {
+        cout << "Failed to inject kcu-hack.dll\n";
+        return;
+    }
+
+    DWORD waitResult = WaitForSingleObject(hEventInit, 6000);
 
     switch (waitResult) {
         case WAIT_OBJECT_0:
@@ -81,6 +77,8 @@ void Controller::initialize() {
         default:
             cerr << "Wait failed!" << endl;
     }
+
+    CloseHandle(hEventInit);
 }
 
 void Controller::cleanup() {
