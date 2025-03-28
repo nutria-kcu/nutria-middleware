@@ -10,7 +10,7 @@
 //	Controller controller;
 //
 //    int cmd, option;
-//
+//    cout << "Enter command (CHAR): ";
 //	while (true) {
 //		char ch = _getch();
 //
