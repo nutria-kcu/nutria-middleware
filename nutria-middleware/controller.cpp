@@ -45,7 +45,7 @@ bool Controller::sendMSG(int cmd, int option) {
 void Controller::initialize() {
     
     bool result = false;
-    wstring targetProcess = L"Notepad.exe";
+    wstring targetProcess = L"ac_client.exe";
     DWORD pid = check_pid(targetProcess);
     wstring hackCoreDLL = get_current_directory() + L"\\res\\kcu-hack.dll";
 
