@@ -26,7 +26,7 @@ public:
     ~Controller();
 
     bool sendMSG(int cmd, int option);
-
+    void cleanup();    // Method to clean up resources
 private:
     // Private Member Variables (State, configuration, etc.)
     SharedMemoryHandler* sh; // Shared memory handler pointer (static member)
@@ -35,7 +35,7 @@ private:
 
     // Private Helper Methods (Optional)
     void initialize(); // Method to initialize the controller
-    void cleanup();    // Method to clean up resources
+
     bool start_32bit_injector(DWORD target_pid, const std::wstring& dll_path);
 };
 

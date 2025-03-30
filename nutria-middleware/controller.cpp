@@ -47,7 +47,8 @@ bool Controller::sendMSG(int cmd, int option) {
 void Controller::initialize() {
     
     bool result = false;
-    wstring targetProcess = L"ac_client.exe";
+    //wstring targetProcess = L"ac_client.exe";
+    wstring targetProcess = L"test32bitapp.exe";
     DWORD pid = check_pid(targetProcess);
     wstring hackCoreDLL = get_current_directory() + L"\\res\\kcu-hack.dll";
 
@@ -60,10 +61,14 @@ void Controller::initialize() {
 
     // event signal 대기하기 -> hack-core init 완료대기해야함
     HANDLE hEventInit = CreateEvent(NULL, TRUE, FALSE, L"COREINIT");
+    //ResetEvent(hEventInit);
 
     if (!start_32bit_injector(pid, hackCoreDLL)) {
         std::cerr << "Injection failed." << std::endl;
         return;
+    }
+    else {
+        cout << "Injector returned\n";
     }
 
     //result = dll_injection(pid, hackCoreDLL);

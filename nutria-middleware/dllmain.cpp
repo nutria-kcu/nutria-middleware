@@ -5,6 +5,7 @@
 
 extern "C" __declspec(dllexport) bool sendMessage(Controller* controller, int cmd, int option);
 extern "C" __declspec(dllexport) Controller* initController();
+extern "C" __declspec(dllexport) void destroyController(Controller* controller);
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -32,4 +33,11 @@ bool sendMessage(Controller* controller, int cmd, int option) {
 
 Controller* initController() {
     return new Controller();
+}
+
+void destroyController(Controller* controller) {
+    if (controller) {  // Ensure the pointer is valid
+        //controller->cleanup();
+        delete controller;
+    }
 }
