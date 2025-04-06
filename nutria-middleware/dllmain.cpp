@@ -1,7 +1,9 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
+// need to be refactored 
 #include "pch.h"
 #include <iostream>
 #include "controller.h"
+#include "util.h"
 
 extern "C" __declspec(dllexport) bool sendMessage(Controller* controller, int cmd, int option);
 extern "C" __declspec(dllexport) Controller* initController();
@@ -33,7 +35,14 @@ bool sendMessage(Controller* controller, int cmd, int option) {
 }
 
 bool isGameOn() {
+    DWORD result = check_pid(L"ac_client.exe");
 
+    if (result) {
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 Controller* initController() {
