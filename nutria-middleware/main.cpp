@@ -5,66 +5,72 @@
 
 using namespace std;
 
-//bool sendMessage(Controller* controller, int cmd, int option) {
-//    if (controller) {
-//        return controller->sendMSG(cmd, option);
-//    }
-//    return false; // Return false if the controller is not initialized
-//}
-//
-//Controller* initController() {
-//    return new Controller();
-//}
-//
-//void destroyController(Controller* controller) {
-//    if (controller) {  // Ensure the pointer is valid
-//        //controller->cleanup();
-//        delete controller;
-//    }
-//}
+bool sendMessage(Controller* controller, int cmd, int option) {
+    if (controller) {
+        return controller->sendMSG(cmd, option);
+    }
+    return false;
+}
 
+Controller* initController() {
+    cout << "Initializing controller...\n";
+    return new Controller();
+}
+
+void destroyController(Controller* controller) {
+    if (controller) {
+        delete controller;
+    }
+}
 
 int main() {
-	//Controller* controller = initController();
-    Controller controller;
+    bool inited = false;
+    Controller* controller = nullptr;
     int cmd, option;
-    cout << "Enter command (CHAR): ";
-	while (true) {
-		char ch = _getch();
 
-		if (ch == 's') {
+    cout << "Press 'i' to initialize, 's' to send, 'q' to quit.\n";
+
+    while (true) {
+        char ch = _getch();
+
+        if (ch == 'i') {
+            if (!inited) {
+                controller = initController();
+                inited = true;
+                cout << "Controller initialized.\n";
+            }
+            else {
+                cout << "Already initialized.\n";
+            }
+        }
+
+        else if (ch == 's') {
+            if (!inited) {
+                cout << "Not initialized! Press 'i' first.\n";
+                continue;
+            }
+
             cout << "Enter command (number): ";
             string cmdInput;
-            getline(cin, cmdInput);  // Read the full input line
+            getline(cin, cmdInput);
 
-            if (cmdInput.empty() || !isValidNumber(cmdInput)) {
-                cmd = 0;  // If input is empty or not a valid number, set cmd to 0
-            }
-            else {
-                cmd = stoi(cmdInput);  // Convert string to integer
-            }
+            cmd = (cmdInput.empty() || !isValidNumber(cmdInput)) ? 0 : stoi(cmdInput);
 
-            // Prompt user for option input
             cout << "Enter option (number): ";
             string optionInput;
-            getline(cin, optionInput);  // Read the full input line
+            getline(cin, optionInput);
 
-            if (optionInput.empty() || !isValidNumber(optionInput)) {
-                option = 0;  // If input is empty or not a valid number, set option to 0
-            }
-            else {
-                option = stoi(optionInput);  // Convert string to integer
-            }
+            option = (optionInput.empty() || !isValidNumber(optionInput)) ? 0 : stoi(optionInput);
 
             cout << "SetMSG with cmd: " << cmd << ", option: " << option << endl;
+            sendMessage(controller, cmd, option);
+        }
 
-            //sendMessage(controller,cmd,option);
-            controller.sendMSG(cmd, option);
-		}
-        if (ch == 'q') {
+        else if (ch == 'q') {
             break;
         }
-	}
-    //destroyController(controller);
-	return 0;
+    }
+
+    destroyController(controller);
+    return 0;
 }

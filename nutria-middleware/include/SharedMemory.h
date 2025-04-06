@@ -27,6 +27,7 @@ private:
     void cleanup();
     void initProducer(const TCHAR* shmName);
     void initConsumer(const TCHAR* shmName);
+    void printEventStatus(HANDLE hEvent, const std::wstring& eventName);
 
 public:
     SharedMemoryHandler(const TCHAR* shmName, const int isProducer);

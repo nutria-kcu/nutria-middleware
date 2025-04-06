@@ -6,6 +6,7 @@
 extern "C" __declspec(dllexport) bool sendMessage(Controller* controller, int cmd, int option);
 extern "C" __declspec(dllexport) Controller* initController();
 extern "C" __declspec(dllexport) void destroyController(Controller* controller);
+extern "C" __declspec(dllexport) bool isGameOn();
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -29,6 +30,10 @@ bool sendMessage(Controller* controller, int cmd, int option) {
         return controller->sendMSG(cmd, option);
     }
     return false; // Return false if the controller is not initialized
+}
+
+bool isGameOn() {
+
 }
 
 Controller* initController() {

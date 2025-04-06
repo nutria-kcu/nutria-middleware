@@ -3,7 +3,7 @@
 #include <iostream>
 #include <tchar.h>
 
-void printEventStatus(HANDLE hEvent, const std::wstring& eventName) {
+void SharedMemoryHandler::printEventStatus(HANDLE hEvent, const std::wstring& eventName) {
     DWORD status = WaitForSingleObject(hEvent, 0);
 
     if (status == WAIT_OBJECT_0) {
